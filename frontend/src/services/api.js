@@ -1,4 +1,6 @@
-const BASE_URL = 'http://127.0.0.1:8000/api/v1';
+// Use relative path so it works both in dev (with proxy) and prod (same domain)
+// OR check environment. For this "One Container" setup, relative /api/v1 is best.
+const BASE_URL = '/api/v1';
 
 const getHeaders = () => {
     const headers = { 'Content-Type': 'application/json' };

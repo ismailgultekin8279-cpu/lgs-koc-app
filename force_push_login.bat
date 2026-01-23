@@ -1,7 +1,7 @@
 @echo off
 echo Github Giris Bilgilerini Sifirliyor...
-"C:\Program Files\Git\cmd\git.exe" credential-manager uninstall
-"C:\Program Files\Git\cmd\git.exe" credential-manager install
+"C:\Program Files\Git\cmd\git.exe" credential-manager unconfigure
+"C:\Program Files\Git\cmd\git.exe" credential-manager configure
 
 echo.
 echo Github'a Yukleniyor... (Lutfen ekrana gelen giris penceresini kullanin)

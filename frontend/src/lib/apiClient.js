@@ -1,4 +1,4 @@
-const API_BASE = "/api";
+const API_BASE = "https://lgs-backend-wl8r.onrender.com/api/v1";
 
 /**
  * Small helper to create a user-friendly error without leaking raw debug JSON to UI.

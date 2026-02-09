@@ -46,21 +46,40 @@ class Command(BaseCommand):
                             total_topics += 1
         self.stdout.write(self.style.SUCCESS(f"Populated {total_topics} topics across the curriculum."))
 
-        # 3. Activate Students
+        # 2. Activate Students & Clean Slate
         students = Student.objects.all()
+        self.stdout.write(f"Syncing {students.count()} students...")
+        
         for student in students:
-            config, created = CoachingConfig.objects.get_or_create(student=student)
-            if created or not config.current_academic_month:
-                config.current_academic_month = 9
-                config.current_academic_week = 1
-                config.target_score = 300
-                config.save()
-                self.stdout.write(f"Config Activated for: {student.full_name}")
+            # Ensure config exists
+            config, _ = CoachingConfig.objects.get_or_create(student=student)
+            config.current_academic_month = 2 # February
+            config.current_academic_week = 2  # Current week
+            config.save()
             
-            # 4. Generate Initial Plan if empty
-            if not student.study_tasks.exists():
-                service = CoachingService(student)
-                service.generate_daily_plan()
-                self.stdout.write(f"Initial Plan Generated for: {student.full_name}")
+            # CLEAR OLD TASKS to ensure the new 3-task limit logic fills the void correctly
+            old_tasks_count = student.tasks.count()
+            student.tasks.all().delete()
+            self.stdout.write(f"  - Student {student.full_name}: Cleared {old_tasks_count} old tasks. Config set to Feb Week 2.")
 
-        self.stdout.write(self.style.SUCCESS('--- LIVE RESCUE COMPLETE ---'))
+        # 3. Populate Topics (Minimal set for February)
+        feb_topics = [
+            ("Matematik", "Üslü İfadeler (Genel Tekrar)", 2, 1),
+            ("Fen Bilimleri", "DNA ve Genetik Kod (Derinleşme)", 2, 1),
+            ("Türkçe", "Paragrafta Anlam", 2, 1),
+            ("Matematik", "Kareköklü İfadeler", 2, 2),
+            ("Fen Bilimleri", "Basınç", 2, 2),
+            ("Türkçe", "Sözel Mantık", 2, 2),
+        ]
+        
+        for subj_name, title, m, w in feb_topics:
+            sub = Subject.objects.get(name=subj_name)
+            Topic.objects.get_or_create(
+                subject=sub,
+                title=title,
+                month=m,
+                week=w,
+                defaults={'order': 1}
+            )
+        
+        self.stdout.write(self.style.SUCCESS("RESCUE COMPLETED: Data reset and students activated. Go to dashboard and click REFRESH PLAN!"))

@@ -89,7 +89,7 @@ export default function StudentDashboard({ selectedStudentId }) {
   } = useQuery({
     queryKey: ["dailyPlan", studentId],
     queryFn: () => getDailyPlan(studentId),
-    enabled: Boolean(studentId),
+    enabled: Boolean(studentId) && studentId !== "undefined",
   });
 
   const tasks = useMemo(() => normalizeDailyPlan(dailyPlanRaw), [dailyPlanRaw]);
@@ -111,7 +111,7 @@ export default function StudentDashboard({ selectedStudentId }) {
   } = useQuery({
     queryKey: ["coaching", studentId],
     queryFn: () => getCoaching(studentId),
-    enabled: Boolean(studentId),
+    enabled: Boolean(studentId) && studentId !== "undefined",
   });
 
   const coaching = useMemo(() => normalizeCoaching(coachingRaw), [coachingRaw]);

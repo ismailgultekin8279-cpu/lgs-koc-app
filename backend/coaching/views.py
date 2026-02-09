@@ -49,6 +49,14 @@ class CoachingViewSet(viewsets.GenericViewSet):
         weights = ai_svc._calculate_subject_weights()
         critical_subjects = ai_svc.get_critical_subjects()
 
+        # Safely get config
+        config = getattr(student, 'coaching_config', None)
+        if not config:
+            from .models import CoachingConfig
+            config, _ = CoachingConfig.objects.get_or_create(student=student)
+            
+        ai_msg = config.last_coach_message
+        
         is_generic = any(word in (ai_msg or "").lower() for word in ["harika", "gidiyorsun", "devam et", "rotasyonuyla", "unurma", "durumda değil", "odaklanalım"])
         
         if critical_subjects and (not ai_msg or is_generic):
@@ -66,18 +74,16 @@ class CoachingViewSet(viewsets.GenericViewSet):
                 msg = f"{top_weakness} dersinde biraz eksiğin var. Bugün bu konuyu halledelim."
         
         # Add current focus info
-        # ... rest remains SAME ...
-        config = student.coaching_config
         current_focus = None
         if config.current_academic_month and config.current_academic_week:
             month_name = {9: "Eylül", 10: "Ekim", 11: "Kasım", 12: "Aralık", 1: "Ocak", 2: "Şubat", 3: "Mart", 4: "Nisan", 5: "Mayıs", 6: "Haziran"}.get(config.current_academic_month, str(config.current_academic_month))
             current_focus = f"{month_name} {config.current_academic_week}. Hafta"
 
         return Response({
-            "version": "2.0.1-fixed",
+            "version": "2.0.2-bulletproof",
             "weaknesses": weaknesses,
-            "weights": weights,  # Include weights for frontend transparency
-            "config": CoachingConfigSerializer(student.coaching_config).data,
+            "weights": weights,
+            "config": CoachingConfigSerializer(config).data,
             "message": msg,
             "current_focus": current_focus
         })
@@ -128,6 +134,13 @@ class CurriculumViewSet(viewsets.ModelViewSet):
 
         # Get student
         student = getattr(request.user, 'student_profile', None)
+        student_id_param = request.query_params.get('student_id')
+
+        if student_id_param and student_id_param != "undefined":
+            try:
+                student = Student.objects.get(id=student_id_param)
+            except Student.DoesNotExist:
+                return Response({"error": "Student not found"}, status=404)
 
         # Annotate topics with is_completed
         topics = Topic.objects.filter(subject=subject).order_by('month', 'week', 'order')

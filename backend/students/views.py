@@ -73,7 +73,7 @@ class StudyTaskViewSet(viewsets.ModelViewSet):
         student_id = self.request.query_params.get('student')
         date_param = self.request.query_params.get('date')
         
-        if student_id:
+        if student_id and student_id != "undefined":
             qs = qs.filter(student_id=student_id)
         if date_param:
             qs = qs.filter(date=date_param)

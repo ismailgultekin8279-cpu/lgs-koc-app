@@ -36,6 +36,17 @@ class CoachingViewSet(viewsets.GenericViewSet):
         Returns high-level status (weaknesses, current target, etc.)
         """
         student = self.get_object()
+        
+        # 0. AUTO-RESCUE TRIGGER (Self-Healing logic)
+        from .models import Subject
+        if Subject.objects.count() == 0:
+            from django.core.management import call_command
+            try:
+                call_command('live_rescue')
+                student.refresh_from_db()
+            except Exception as e:
+                print(f"Auto-Rescue Failed: {e}")
+
         service = CoachingService(student)
         weaknesses = service._analyze_weaknesses()
         

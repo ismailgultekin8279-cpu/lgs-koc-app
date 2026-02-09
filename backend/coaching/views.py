@@ -22,6 +22,16 @@ class CoachingViewSet(viewsets.GenericViewSet):
     @action(detail=True, methods=['post'])
     def generate_plan(self, request, pk=None):
         student = self.get_object()
+        
+        # AUTO-RESCUE TRIGGER (Backup)
+        from .models import Topic
+        if Topic.objects.count() == 0:
+            from django.core.management import call_command
+            try:
+                call_command('live_rescue')
+                student.refresh_from_db()
+            except: pass
+
         service = CoachingService(student)
         
         # Optional: Allow date param
@@ -37,9 +47,9 @@ class CoachingViewSet(viewsets.GenericViewSet):
         """
         student = self.get_object()
         
-        # 0. AUTO-RESCUE TRIGGER (Self-Healing logic)
-        from .models import Subject
-        if Subject.objects.count() == 0:
+        # 0. AUTO-RESCUE TRIGGER (Aggressive Healing)
+        from .models import Topic
+        if Topic.objects.count() < 10: # Minimum curriculum check
             from django.core.management import call_command
             try:
                 call_command('live_rescue')
@@ -125,17 +135,14 @@ class CurriculumViewSet(viewsets.ModelViewSet):
         return super().list(request)
 
     def list_tree(self, request):
-        """
-        Return the full curriculum tree for a specific subject (default: Matematik).
+        # AUTO-RESCUE TRIGGER (Aggressive Healing for Curriculum page)
+        from .models import Topic
+        if Topic.objects.count() < 10:
+            from django.core.management import call_command
+            try:
+                call_command('live_rescue')
+            except: pass
 
-        Structure:
-        {
-          "subject": "Matematik",
-          "months": [
-             { "id": 9, "name": "Eylül", "weeks": [ ... ] }
-          ]
-        }
-        """
         subject_slug = request.query_params.get('subject', 'matematik') # Default to math
         try:
             subject = Subject.objects.get(slug=subject_slug)

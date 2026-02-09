@@ -122,7 +122,10 @@ export default function Dashboard() {
     return (
         <div className="max-w-6xl mx-auto space-y-8">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-slate-900">Hoş geldin, {student?.full_name || 'Öğrenci'}! 👋</h1>
+                <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
+                    Hoş geldin, {student?.full_name || 'Öğrenci'}! 👋
+                    <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-1 rounded-full">v2.0.1</span>
+                </h1>
                 <p className="text-slate-500 mt-2">Bugünün hedeflerini tamamla ve hedefine bir adım daha yaklaş.</p>
             </div>
 
@@ -188,7 +191,7 @@ export default function Dashboard() {
                                     </>
                                 ) : (
                                     <>
-                                        <span>🔄 Programı Güncelle</span>
+                                        <span>🔄 Akıllı Programı Yenile</span>
                                     </>
                                 )}
                             </button>

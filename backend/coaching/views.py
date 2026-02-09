@@ -25,7 +25,8 @@ class CoachingViewSet(viewsets.GenericViewSet):
         
         # AUTO-RESCUE TRIGGER (Backup)
         from .models import Topic
-        if Topic.objects.count() == 0:
+        force = request.query_params.get('force_rescue') == 'true'
+        if Topic.objects.count() < 1500 or force:
             from .rescue_engine import run_rescue_logic
             try:
                 run_rescue_logic()
@@ -49,13 +50,16 @@ class CoachingViewSet(viewsets.GenericViewSet):
         
         # 0. AUTO-RESCUE TRIGGER (Aggressive Healing)
         from .models import Topic
-        if Topic.objects.count() < 10: # Minimum curriculum check
+        force = request.query_params.get('force_rescue') == 'true'
+        if Topic.objects.count() < 1500 or force: # Ensure Full Year (1680 topics)
             from .rescue_engine import run_rescue_logic
             try:
                 run_rescue_logic()
                 student.refresh_from_db()
             except Exception as e:
                 print(f"Auto-Rescue Failed: {e}")
+                import traceback
+                traceback.print_exc()
 
         service = CoachingService(student)
         weaknesses = service._analyze_weaknesses()
@@ -137,7 +141,8 @@ class CurriculumViewSet(viewsets.ModelViewSet):
     def list_tree(self, request):
         # AUTO-RESCUE TRIGGER (Aggressive Healing for Curriculum page)
         from .models import Topic
-        if Topic.objects.count() < 10:
+        force = request.query_params.get('force_rescue') == 'true'
+        if Topic.objects.count() < 1500 or force:
             from .rescue_engine import run_rescue_logic
             try:
                 run_rescue_logic()

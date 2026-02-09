@@ -578,8 +578,12 @@ class AICoachingService:
                         subject__name__iexact=t_subject,
                         title__icontains=clean_lookup
                     ).first()
-                    if res_topic:
-                        t_id = res_topic.id
+                # Cast t_id to int to ensure serializer doesn't crash
+                if t_id:
+                    try:
+                        t_id = int(t_id)
+                    except:
+                        t_id = None
 
                 all_created_tasks.append(StudyTask(
                     student=self.student,

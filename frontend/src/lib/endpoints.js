@@ -63,5 +63,5 @@ export function listExamResults({ studentId, examDate } = {}) {
   if (studentId) params.set("student", String(studentId));
   if (examDate) params.set("exam_date", String(examDate));
   const qs = params.toString();
-  return apiGet(`/exam-results/${qs ? `?${qs}` : ""}`);
+  return apiGet(`/students/exam-results/${qs ? `?${qs}` : ""}`);
 }

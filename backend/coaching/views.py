@@ -26,9 +26,9 @@ class CoachingViewSet(viewsets.GenericViewSet):
         # AUTO-RESCUE TRIGGER (Backup)
         from .models import Topic
         if Topic.objects.count() == 0:
-            from django.core.management import call_command
+            from .rescue_engine import run_rescue_logic
             try:
-                call_command('live_rescue')
+                run_rescue_logic()
                 student.refresh_from_db()
             except: pass
 
@@ -50,9 +50,9 @@ class CoachingViewSet(viewsets.GenericViewSet):
         # 0. AUTO-RESCUE TRIGGER (Aggressive Healing)
         from .models import Topic
         if Topic.objects.count() < 10: # Minimum curriculum check
-            from django.core.management import call_command
+            from .rescue_engine import run_rescue_logic
             try:
-                call_command('live_rescue')
+                run_rescue_logic()
                 student.refresh_from_db()
             except Exception as e:
                 print(f"Auto-Rescue Failed: {e}")
@@ -138,9 +138,9 @@ class CurriculumViewSet(viewsets.ModelViewSet):
         # AUTO-RESCUE TRIGGER (Aggressive Healing for Curriculum page)
         from .models import Topic
         if Topic.objects.count() < 10:
-            from django.core.management import call_command
+            from .rescue_engine import run_rescue_logic
             try:
-                call_command('live_rescue')
+                run_rescue_logic()
             except: pass
 
         subject_slug = request.query_params.get('subject', 'matematik') # Default to math

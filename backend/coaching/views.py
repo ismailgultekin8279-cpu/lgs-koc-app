@@ -27,9 +27,9 @@ class CoachingViewSet(viewsets.GenericViewSet):
         from .models import Topic
         force = request.query_params.get('force_rescue') == 'true'
         if Topic.objects.count() < 1500 or force:
-            from .rescue_engine import run_rescue_logic
+            from .rescue_engine import run_nuclear_wipe
             try:
-                run_rescue_logic()
+                run_nuclear_wipe()
                 student.refresh_from_db()
             except: pass
 
@@ -52,9 +52,9 @@ class CoachingViewSet(viewsets.GenericViewSet):
         from .models import Topic
         force = request.query_params.get('force_rescue') == 'true'
         if Topic.objects.count() < 1500 or force: # Ensure Full Year (1680 topics)
-            from .rescue_engine import run_rescue_logic
+            from .rescue_engine import run_nuclear_wipe
             try:
-                run_rescue_logic()
+                run_nuclear_wipe()
                 student.refresh_from_db()
             except Exception as e:
                 print(f"Auto-Rescue Failed: {e}")
@@ -143,9 +143,9 @@ class CurriculumViewSet(viewsets.ModelViewSet):
         from .models import Topic
         force = request.query_params.get('force_rescue') == 'true'
         if Topic.objects.count() < 1500 or force:
-            from .rescue_engine import run_rescue_logic
+            from .rescue_engine import run_nuclear_wipe
             try:
-                run_rescue_logic()
+                run_nuclear_wipe()
             except: pass
 
         subject_slug = request.query_params.get('subject', 'matematik') # Default to math

@@ -129,3 +129,33 @@ def run_rescue_logic(stdout=None):
 
     log("--- RESCUE ENGINE COMPLETED ---")
     return True
+
+def run_nuclear_wipe(stdout=None):
+    """
+    Completely wipes the database and rebuilds it.
+    The ultimate "Start Over" button.
+    """
+    from coaching.models import Subject, Topic, StudentProgress
+    from students.models import StudyTask
+    from django.db import transaction
+
+    def log(msg):
+        if stdout:
+            stdout.write(msg)
+        print(msg)
+
+    log("!!! NUCLEAR WIPE INITIATED !!!")
+    with transaction.atomic():
+        log("Deleting Tasks and Progress...")
+        StudyTask.objects.all().delete()
+        StudentProgress.objects.all().delete()
+        
+        log("Deleting Topics and Subjects...")
+        Topic.objects.all().delete()
+        Subject.objects.all().delete()
+        
+        log("Rebuilding from scratch...")
+        run_rescue_logic(stdout=stdout)
+    
+    log("!!! NUCLEAR WIPE COMPLETED !!!")
+    return True

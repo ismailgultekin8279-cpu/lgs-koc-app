@@ -23,17 +23,9 @@ class CoachingViewSet(viewsets.GenericViewSet):
     def generate_plan(self, request, pk=None):
         student = self.get_object()
         
-        # AUTO-RESCUE TRIGGER (Corrupted or Missing)
-        from .models import Topic
-        is_corrupted = Topic.objects.filter(title="Temel İşlem Yeteneği").count() > 5
-        force = request.query_params.get('force_rescue') == 'true'
-        if Topic.objects.count() < 1500 or is_corrupted or force:
-            from .rescue_engine import run_nuclear_wipe
-            try:
-                run_nuclear_wipe()
-                student.refresh_from_db()
-            except: pass
-
+        # Plan generation should lead to a fast response.
+        # The Rescue Trigger is already in 'status' and 'list_tree'.
+        # We don't want to run a 20s wipe during a plan generation POST.
         service = CoachingService(student)
         
         # Optional: Allow date param

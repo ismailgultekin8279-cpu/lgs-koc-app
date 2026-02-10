@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { User, Target, Save, LogOut } from "lucide-react";
+import { User, Target, Save, LogOut, AlertTriangle, RefreshCw } from "lucide-react";
 import { api } from "../services/api";
 import { useStudent } from "../context/StudentContext";
 import { Card, CardHeader, CardBody } from "../components/Card";
@@ -119,7 +119,7 @@ export default function SettingsPage() {
 
             <Card>
                 <CardHeader title="Hesap İşlemleri" />
-                <CardBody>
+                <CardBody className="space-y-4">
                     <button
                         onClick={logout}
                         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-red-100 text-red-600 hover:bg-red-50 hover:border-red-200 transition-all font-bold"
@@ -127,8 +127,45 @@ export default function SettingsPage() {
                         <LogOut size={20} />
                         Oturumu Kapat
                     </button>
+
+                    <div className="pt-4 border-t border-slate-100">
+                        <div className="bg-red-50 rounded-xl p-4 border border-red-100">
+                            <h4 className="flex items-center gap-2 text-red-800 font-bold mb-2">
+                                <AlertTriangle size={18} />
+                                Tehlikeli Bölge
+                            </h4>
+                            <p className="text-red-600 text-sm mb-4">
+                                Eğer müfredatında eksik veya hatalı konular görüyorsan, bu butonu kullanarak sistemi sıfırlayabilirsin. Bu işlem tüm planını siler ve müfredatı yeniden yükler.
+                            </p>
+                            <button
+                                onClick={async () => {
+                                    if (window.confirm("DİKKAT: Tüm müfredat ve plan verilerin silinip tekrar yüklenecek. Emin misin?")) {
+                                        try {
+                                            setLoading(true);
+                                            setMessage(null);
+                                            const res = await api.resetCurriculum();
+                                            alert("Sistem başarıyla sıfırlandı! Sayfa yenileniyor...");
+                                            window.location.reload();
+                                        } catch (e) {
+                                            alert("Sıfırlama başarısız: " + e.message);
+                                            setLoading(false);
+                                        }
+                                    }
+                                }}
+                                disabled={loading}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-all font-bold text-sm shadow-lg shadow-red-600/20"
+                            >
+                                {loading ? "Sıfırlanıyor..." : (
+                                    <>
+                                        <RefreshCw size={16} />
+                                        Müfredatı ve Sistemi Sıfırla (Nuclear Reset)
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
                 </CardBody>
             </Card>
-        </div>
+        </div >
     );
 }

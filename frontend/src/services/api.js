@@ -155,5 +155,15 @@ export const api = {
         });
         if (!res.ok) throw new Error('Failed to update topic');
         return res.json();
+    },
+
+    // Danger Zone
+    resetCurriculum: async () => {
+        const res = await fetch(`${BASE_URL}/coaching/curriculum/reset_curriculum/`, {
+            method: 'POST',
+            headers: getHeaders(),
+        });
+        if (!res.ok) throw new Error('Reset failed');
+        return res.json();
     }
 };

@@ -90,32 +90,45 @@ def run_rescue_logic(stdout=None):
 
     with transaction.atomic():
         # Clean the "minimal/repetitive" pool topics if needed
-        # Actually it's safer to just get_or_create to avoid deleting real student progress
+        # actually run_nuclear_wipe already deletes them, but for safety in standalone mode:
         
         total_count = 0
+        all_new_topics = []
+        
+        # 1. Create Subjects First (Low count, simple)
+        subject_map = {}
+        for subject_name in curr_data.keys():
+            sub_obj, _ = Subject.objects.get_or_create(name=subject_name)
+            subject_map[subject_name] = sub_obj
+
+        # 2. Prepare Topics for Bulk Create
         for subject_name, months in curr_data.items():
-            subject_obj, _ = Subject.objects.get_or_create(name=subject_name)
+            subject_obj = subject_map[subject_name]
             for month in months:
                 month_id = month["id"]
                 for week_data in month["weeks"]:
                     w_id = week_data["week"]
                     for index, title in enumerate(week_data["topics"]):
-                        topic, created = Topic.objects.get_or_create(
+                        # Create Topic instance in memory
+                        t = Topic(
                             subject=subject_obj,
                             month=month_id,
                             week=w_id,
                             order=index,
-                            defaults={"title": title}
+                            title=title
                         )
-                        # If topic exists but title is different (e.g. from the repetitive pool), update it
-                        if not created and topic.title != title:
-                            topic.title = title
-                            topic.save()
-                        
-                        if created:
-                            total_count += 1
+                        all_new_topics.append(t)
+                        total_count += 1
         
-        log(f"Synced {total_count} curriculum topics.")
+        # 3. Bulk Create (The Speed Fix!)
+        # We don't check for existence because we assume this is run after a wipe
+        # or in a controlled "missing data" scenario. 
+        # But to be safe against duplicates if not wiped:
+        if not Topic.objects.exists():
+            Topic.objects.bulk_create(all_new_topics)
+            log(f"Synced {total_count} curriculum topics via BULK CREATE.")
+        else:
+             log("Topics already exist. Skipping bulk create to avoid duplicates.")
 
         # 3. Student Config Fix
         students = Student.objects.all()

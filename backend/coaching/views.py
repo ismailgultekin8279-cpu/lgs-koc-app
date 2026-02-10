@@ -48,12 +48,25 @@ class CoachingViewSet(viewsets.GenericViewSet):
         if Topic.objects.count() < 1500 or is_corrupted or force: # Ensure Full Year (1680 topics)
             from .rescue_engine import run_nuclear_wipe
             try:
+                # Optimized run_nuclear_wipe is now fast enough to run inline
                 run_nuclear_wipe()
                 student.refresh_from_db()
             except Exception as e:
                 print(f"Auto-Rescue Failed: {e}")
                 import traceback
                 traceback.print_exc()
+
+    @action(detail=False, methods=['post'])
+    def reset_curriculum(self, request):
+        """
+        Manually triggers the Nuclear Wipe & Rebuild.
+        """
+        from .rescue_engine import run_nuclear_wipe
+        try:
+            run_nuclear_wipe()
+            return Response({"status": "success", "message": "Curriculum Reset & Rebuilt."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"status": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         service = CoachingService(student)
         weaknesses = service._analyze_weaknesses()

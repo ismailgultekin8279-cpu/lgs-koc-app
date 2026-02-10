@@ -56,30 +56,6 @@ class CoachingViewSet(viewsets.GenericViewSet):
                 import traceback
                 traceback.print_exc()
 
-    @action(detail=False, methods=['post'])
-    def reset_curriculum(self, request):
-        """
-        Manually triggers the Nuclear Wipe & Rebuild asynchronously
-        to avoid Render 30s timeout.
-        """
-        import threading
-        from .rescue_engine import run_nuclear_wipe
-        
-        def async_wipe():
-            try:
-                print("Starting Async Nuclear Wipe...")
-                run_nuclear_wipe()
-                print("Async Wipe Completed.")
-            except Exception as e:
-                print(f"Async Wipe Failed: {e}")
-
-        # Fire and forget
-        threading.Thread(target=async_wipe).start()
-        
-        return Response({
-            "status": "success", 
-            "message": "Sıfırlama işlemi arka planda başlatıldı. Lütfen 30 saniye bekleyip sayfayı yenileyin."
-        }, status=status.HTTP_200_OK)
 
         service = CoachingService(student)
         weaknesses = service._analyze_weaknesses()
@@ -161,13 +137,36 @@ class CurriculumViewSet(viewsets.ModelViewSet):
     def list_tree(self, request):
         # AUTO-RESCUE TRIGGER (Aggressive Healing for Curriculum page)
         from .models import Topic
-        is_corrupted = Topic.objects.filter(title="Temel İşlem Yeteneği").count() > 5
-        force = request.query_params.get('force_rescue') == 'true'
         if Topic.objects.count() < 1500 or is_corrupted or force:
             from .rescue_engine import run_nuclear_wipe
             try:
                 run_nuclear_wipe()
             except: pass
+            
+    @action(detail=False, methods=['post'])
+    def reset_curriculum(self, request):
+        """
+        Manually triggers the Nuclear Wipe & Rebuild asynchronously
+        to avoid Render 30s timeout.
+        """
+        import threading
+        from .rescue_engine import run_nuclear_wipe
+        
+        def async_wipe():
+            try:
+                print("Starting Async Nuclear Wipe...")
+                run_nuclear_wipe()
+                print("Async Wipe Completed.")
+            except Exception as e:
+                print(f"Async Wipe Failed: {e}")
+
+        # Fire and forget
+        threading.Thread(target=async_wipe).start()
+        
+        return Response({
+            "status": "success", 
+            "message": "Sıfırlama işlemi arka planda başlatıldı. Lütfen 30 saniye bekleyip sayfayı yenileyin."
+        }, status=status.HTTP_200_OK)
 
         subject_slug = request.query_params.get('subject', 'matematik') # Default to math
         try:

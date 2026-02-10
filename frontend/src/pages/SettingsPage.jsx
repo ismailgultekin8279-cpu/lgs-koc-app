@@ -144,10 +144,13 @@ export default function SettingsPage() {
                                             setLoading(true);
                                             setMessage(null);
                                             const res = await api.resetCurriculum();
-                                            alert("Sistem başarıyla sıfırlandı! Sayfa yenileniyor...");
-                                            window.location.reload();
+                                            // Backend now returns immediately with "success" while processing in background
+                                            alert("Sıfırlama işlemi başlatıldı! Sistem arkada verileri temizleyip yeniden kuruyor. Sayfa 5 saniye içinde yenilenecek.");
+                                            setTimeout(() => {
+                                                window.location.reload();
+                                            }, 5000);
                                         } catch (e) {
-                                            alert("Sıfırlama başarısız: " + e.message);
+                                            alert("Sıfırlama hatası: " + e.message);
                                             setLoading(false);
                                         }
                                     }

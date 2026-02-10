@@ -59,14 +59,27 @@ class CoachingViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=['post'])
     def reset_curriculum(self, request):
         """
-        Manually triggers the Nuclear Wipe & Rebuild.
+        Manually triggers the Nuclear Wipe & Rebuild asynchronously
+        to avoid Render 30s timeout.
         """
+        import threading
         from .rescue_engine import run_nuclear_wipe
-        try:
-            run_nuclear_wipe()
-            return Response({"status": "success", "message": "Curriculum Reset & Rebuilt."}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"status": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        def async_wipe():
+            try:
+                print("Starting Async Nuclear Wipe...")
+                run_nuclear_wipe()
+                print("Async Wipe Completed.")
+            except Exception as e:
+                print(f"Async Wipe Failed: {e}")
+
+        # Fire and forget
+        threading.Thread(target=async_wipe).start()
+        
+        return Response({
+            "status": "success", 
+            "message": "Sıfırlama işlemi arka planda başlatıldı. Lütfen 30 saniye bekleyip sayfayı yenileyin."
+        }, status=status.HTTP_200_OK)
 
         service = CoachingService(student)
         weaknesses = service._analyze_weaknesses()

@@ -8,9 +8,9 @@ class CoachingService:
         self.student = student
         self.config, _ = CoachingConfig.objects.get_or_create(student=student)
 
-    def generate_daily_plan(self, target_date=None):
+    def generate_daily_plan(self, target_date=None, use_ai=True):
         """
-        Generates StudyTasks using AI analysis of student's performance and recent completions.
+        Generates StudyTasks using AI analysis or Smart Fallback.
         """
         if target_date is None:
             target_date = date.today()
@@ -48,7 +48,7 @@ class CoachingService:
         from .ai_service import AICoachingService
         ai_service = AICoachingService(self.student)
         
-        real_ai_tasks = ai_service.generate_plan(context, target_date)
+        real_ai_tasks = ai_service.generate_plan(context, target_date, use_ai=use_ai)
         
         if real_ai_tasks:
              return real_ai_tasks

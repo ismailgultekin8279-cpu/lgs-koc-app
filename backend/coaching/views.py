@@ -24,12 +24,13 @@ class CoachingViewSet(viewsets.GenericViewSet):
         student = self.get_object()
         
         # Plan generation should lead to a fast response.
-        # The Rescue Trigger is already in 'status' and 'list_tree'.
-        # We don't want to run a 20s wipe during a plan generation POST.
+        # Check for 'fast' mode or 'force_fallback' to skip AI
+        use_ai = request.query_params.get('fast') != 'true'
+        
         service = CoachingService(student)
         
         # Optional: Allow date param
-        tasks = service.generate_daily_plan()
+        tasks = service.generate_daily_plan(use_ai=use_ai)
         
         serializer = StudyTaskSerializer(tasks, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

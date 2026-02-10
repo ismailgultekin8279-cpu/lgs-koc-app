@@ -278,8 +278,8 @@ class AICoachingService:
                 return topic
         return None
 
-    def generate_plan(self, context, target_date):
-        if not self.api_key:
+    def generate_plan(self, context, target_date, use_ai=True):
+        if not self.api_key or not use_ai:
             # Even without API key, we can now generate smart fallback using curriculum
             return self._generate_fallback_response(context, target_date)
             # return None
@@ -287,6 +287,10 @@ class AICoachingService:
         prompt = self._build_prompt(context, target_date)
         
         try:
+            # Set a strict timeout for AI call to avoid frontend hanging (Render free tier is slow)
+            # New SDK might handle timeouts differently, but we can wrap it or rely on defaults.
+            # Ideally we want 25s max.
+            
             # New SDK usage: client.models.generate_content
             response = self.client.models.generate_content(
                 model='gemini-2.0-flash', 

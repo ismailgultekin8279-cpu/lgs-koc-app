@@ -25,7 +25,7 @@ export async function apiFetch(path, options = {}) {
     method = "GET",
     headers = {},
     body,
-    timeoutMs = 60000,
+    timeoutMs = 120000, // Increased to 120s for Render free tier latency
     signal,
   } = options;
 

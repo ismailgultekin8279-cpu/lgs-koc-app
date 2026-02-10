@@ -158,17 +158,29 @@ def run_nuclear_wipe(stdout=None):
         print(msg)
 
     log("!!! NUCLEAR WIPE INITIATED !!!")
+    
+    # Use atomic to ensure we don't get partial states
     with transaction.atomic():
-        log("Deleting Tasks and Progress...")
+        log("1. Deleting Student Progress & Tasks...")
+        # Delete dependent objects first
         StudyTask.objects.all().delete()
         StudentProgress.objects.all().delete()
         
-        log("Deleting Topics and Subjects...")
-        Topic.objects.all().delete()
+        log("2. Deleting Topics...")
+        # Delete topics. This cascades to progress if any missed.
+        # We use .all().delete() which is efficient enough for 2000 items.
+        count, _ = Topic.objects.all().delete()
+        log(f"Deleted {count} topics.")
+        
+        log("3. Deleting Subjects...")
+        # Only delete subjects if we really want to purge everything.
+        # Actually, keeping subjects is fine, but let's be thorough.
         Subject.objects.all().delete()
         
-        log("Rebuilding from scratch...")
+        log("4. Rebuilding from scratch (V2)...")
+        # Now rebuild without checking for existence because we JUST wiped it.
+        # Run logic with 'force=True' implied by the empty state.
         run_rescue_logic(stdout=stdout)
     
-    log("!!! NUCLEAR WIPE COMPLETED !!!")
+    log("!!! NUCLEAR WIPE COMPLETED SUCCESSFULLY !!!")
     return True

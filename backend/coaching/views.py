@@ -24,8 +24,9 @@ class CoachingViewSet(viewsets.GenericViewSet):
         student = self.get_object()
         
         # Plan generation should lead to a fast response.
-        # Check for 'fast' mode or 'force_fallback' to skip AI
-        use_ai = request.query_params.get('fast') != 'true'
+        # FORCE FAST MODE: Default to False to bypass AI and avoid timeouts on Render Free Tier
+        # We can enable AI later via ?use_ai=true if needed
+        use_ai = request.query_params.get('use_ai') == 'true'
         
         service = CoachingService(student)
         

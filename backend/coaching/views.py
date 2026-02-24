@@ -45,9 +45,8 @@ class CoachingViewSet(viewsets.GenericViewSet):
         
         # 0. AUTO-RESCUE TRIGGER (Aggressive Healing)
         from .models import Topic
-        is_corrupted = Topic.objects.filter(title="Temel İşlem Yeteneği").count() > 5
         force = request.query_params.get('force_rescue') == 'true'
-        if Topic.objects.count() < 1500 or is_corrupted or force: # Ensure Full Year (1680 topics)
+        if Topic.objects.count() < 1500 or force: # Ensure Full Year (1680 topics)
             from .rescue_engine import run_nuclear_wipe
             try:
                 # Optimized run_nuclear_wipe is now fast enough to run inline
@@ -139,9 +138,8 @@ class CurriculumViewSet(viewsets.ModelViewSet):
     def list_tree(self, request):
         # AUTO-RESCUE TRIGGER (Aggressive Healing for Curriculum page)
         from .models import Topic
-        is_corrupted = Topic.objects.filter(title="Temel İşlem Yeteneği").count() > 5
         force = request.query_params.get('force_rescue') == 'true'
-        if Topic.objects.count() < 1500 or is_corrupted or force:
+        if Topic.objects.count() < 1500 or force:
             from .rescue_engine import run_nuclear_wipe
             try:
                 run_nuclear_wipe()

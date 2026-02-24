@@ -18,5 +18,5 @@ python manage.py collectstatic --noinput
 echo "Applying migrations..."
 python manage.py migrate
 
-echo "Starting Gunicorn..."
-exec gunicorn backend_project.wsgi:application --bind 0.0.0.0:8000
+echo "Starting Gunicorn on port ${PORT:-8000}..."
+exec gunicorn backend_project.wsgi:application --bind 0.0.0.0:${PORT:-8000}

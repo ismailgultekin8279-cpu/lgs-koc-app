@@ -88,57 +88,99 @@ def run_rescue_logic(stdout=None):
         ]
     }
 
+    # UNIVERSAL POOLS for automatic gap-filling (ensures 7 topics per week)
+    POOLS = {
+        "Matematik": [
+            "Temel \u0130\u015flem Yetene\u011fi", "Mant\u0131k Muhakeme Prati\u011fi", "Say\u0131sal Analiz \u00c7al\u0131\u015fmas\u0131",
+            "LGS Tipi Soru Analizi", "H\u0131z Testi ve Zaman Y\u00f6netimi", "Hatal\u0131 Soru Analiz Teknikleri", "Genel Matematik Tekrar\u0131"
+        ],
+        "Fen Bilimleri": [
+            "Bilimsel Muhakeme Becerisi", "Deney Analizi ve Yorumlama", "Yeni Nesil Soru \u00c7\u00f6z\u00fcm\u00fc",
+            "Fen Bilimleri H\u0131z Testi", "Kavram Haritas\u0131 \u00c7al\u0131\u015fmas\u0131", "Laboratuvar Sorular\u0131 Analizi", "Fen Bilimleri Genel Tekrar"
+        ],
+        "T\u00fcrk\u00e7e": [
+            "Paragraf H\u0131zland\u0131rma", "S\u00f6zel Mant\u0131k Becerisi", "Okuma Anlama ve Yorum",
+            "S\u00f6zc\u00fckte Anlam Prati\u011fi", "Yaz\u0131m ve Noktalama Check", "Metin T\u00fcrleri Analizi", "T\u00fcrk\u00e7e Genel Tekrar"
+        ],
+        "T.C. \u0130nk\u0131lap Tarihi": [
+            "Kronoloji Analiz Becerisi", "Harita ve G\u00f6rsel Yorumlama", "Kavram Bilgisi Tekrar\u0131",
+            "Kaynak Analizi \u00c7al\u0131\u015fmas\u0131", "Tarihsel Muhakeme", "Olay-Olgu Ayr\u0131m\u0131", "\u0130nk\u0131lap Tarihi Genel Tekrar"
+        ],
+        "Yabanc\u0131 Dil": [
+            "Vocabulary Builder (Focus)", "Reading Comprehension", "Grammar Review and Check",
+            "Sentence Parsing Practice", "Word Association Games", "Translation Exercises", "English General Review"
+        ],
+        "Din K\u00fclt\u00fcr\u00fc": [
+            "Metin Analizi ve Yorum", "Kavram Tekrar\u0131", "Ayet ve Hadis Yorumlama",
+            "Ahlaki Tutum Analizi", "Dini Terimler S\u00f6zl\u00fc\u011f\u00fc", "Din K\u00fclt\u00fcr\u00fc Soru Prati\u011fi", "Din Bilgisi Genel Tekrar"
+        ]
+    }
+
     with transaction.atomic():
-        # Clean the "minimal/repetitive" pool topics if needed
-        # actually run_nuclear_wipe already deletes them, but for safety in standalone mode:
-        
         total_count = 0
         all_new_topics = []
         
-        # 1. Create Subjects First (Low count, simple)
+        # 1. Create/Identify Subjects
         subject_map = {}
-        for subject_name in curr_data.keys():
-            sub_obj, _ = Subject.objects.get_or_create(name=subject_name)
-            subject_map[subject_name] = sub_obj
+        for subj_name in curr_data.keys():
+            sub_obj, _ = Subject.objects.get_or_create(name=subj_name)
+            subject_map[subj_name] = sub_obj
 
-        # 2. Prepare Topics for Bulk Create
-        for subject_name, months in curr_data.items():
-            subject_obj = subject_map[subject_name]
-            for month in months:
-                month_id = month["id"]
-                for week_data in month["weeks"]:
-                    w_id = week_data["week"]
-                    for index, title in enumerate(week_data["topics"]):
-                        # Create Topic instance in memory
-                        t = Topic(
+        # 2. Populate Standard Data + Fill Gaps with Pools (Target 7 per week)
+        academic_months = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
+        
+        for subject_name, subject_obj in subject_map.items():
+            pool = POOLS.get(subject_name, ["Genel Soru Prati\u011fi"])
+            
+            # Create month index for lookup
+            month_data_map = {m["id"]: m["weeks"] for m in curr_data[subject_name]}
+            
+            for m_id in academic_months:
+                weeks_list = month_data_map.get(m_id, [])
+                # Convert week list to map for easier access
+                week_to_topics = {w["week"]: w["topics"] for w in weeks_list}
+                
+                for w_id in range(1, 5):
+                    # 1. Get primary topics
+                    primary_topics = week_to_topics.get(w_id, [])
+                    topic_titles = list(primary_topics)
+                    
+                    # 2. Fill gaps until we hit 7
+                    pool_idx = 0
+                    while len(topic_titles) < 7:
+                        fill_title = pool[pool_idx % len(pool)]
+                        if fill_title not in topic_titles:
+                            topic_titles.append(fill_title)
+                        pool_idx += 1
+                        if pool_idx > 50: break # Safety
+                    
+                    # 3. Create objects
+                    for idx, title in enumerate(topic_titles):
+                        all_new_topics.append(Topic(
                             subject=subject_obj,
-                            month=month_id,
+                            month=m_id,
                             week=w_id,
-                            order=index,
+                            order=idx,
                             title=title
-                        )
-                        all_new_topics.append(t)
+                        ))
                         total_count += 1
         
-        # 3. Bulk Create (The Speed Fix!)
-        # We don't check for existence because we assume this is run after a wipe
-        # or in a controlled "missing data" scenario. 
-        # But to be safe against duplicates if not wiped:
+        # 3. Clear and Bulk Create
         if not Topic.objects.exists():
             Topic.objects.bulk_create(all_new_topics)
-            log(f"Synced {total_count} curriculum topics via BULK CREATE.")
+            log(f"Synced {total_count} curriculum topics via HIGH-DENSITY BULK CREATE.")
         else:
-             log("Topics already exist. Skipping bulk create to avoid duplicates.")
+             log("Topics already exist. Skipping bulk create.")
 
-        # 3. Student Config Fix
+        # 4. Student Config Fix
         students = Student.objects.all()
         for student in students:
             config, _ = CoachingConfig.objects.get_or_create(student=student)
             if not config.current_academic_month:
                 config.current_academic_month = 2 # February
-                config.current_academic_week = 2
+                config.current_academic_week = 3 # End of Feb
                 config.save()
-                log(f"Student {student.id} config initialized for February.")
+                log(f"Student {student.id} config initialized.")
 
     log("--- RESCUE ENGINE COMPLETED ---")
     return True

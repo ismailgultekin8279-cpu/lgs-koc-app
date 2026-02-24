@@ -146,31 +146,6 @@ class CurriculumViewSet(viewsets.ModelViewSet):
             try:
                 run_nuclear_wipe()
             except: pass
-            
-    @action(detail=False, methods=['post'])
-    def reset_curriculum(self, request):
-        """
-        Manually triggers the Nuclear Wipe & Rebuild asynchronously
-        to avoid Render 30s timeout.
-        """
-        import threading
-        from .rescue_engine import run_nuclear_wipe
-        
-        def async_wipe():
-            try:
-                print("Starting Async Nuclear Wipe...")
-                run_nuclear_wipe()
-                print("Async Wipe Completed.")
-            except Exception as e:
-                print(f"Async Wipe Failed: {e}")
-
-        # Fire and forget
-        threading.Thread(target=async_wipe).start()
-        
-        return Response({
-            "status": "success", 
-            "message": "Sıfırlama işlemi arka planda başlatıldı. Lütfen 30 saniye bekleyip sayfayı yenileyin."
-        }, status=status.HTTP_200_OK)
 
         subject_slug = request.query_params.get('subject', 'matematik') # Default to math
         try:
@@ -204,7 +179,6 @@ class CurriculumViewSet(viewsets.ModelViewSet):
             completed_topic_ids = set()
 
         # Build tree manually for the frontend format
-        # This is more efficient than nested serializers for this specific custom view
         months_map = {}
         month_names = {
             9: "Eylül", 10: "Ekim", 11: "Kasım", 12: "Aralık", 
@@ -231,7 +205,6 @@ class CurriculumViewSet(viewsets.ModelViewSet):
             
             # Add topic
             status_val = "completed" if topic.id in completed_topic_ids else "pending"
-            # print(f"DEBUG API: Topic {topic.title} -> {status_val}") # Uncomment if desperate
             
             months_map[m_id]["weeks"][w_id]["topics"].append({
                 "id": topic.id,
@@ -255,6 +228,31 @@ class CurriculumViewSet(viewsets.ModelViewSet):
             "debug_student_id": student.id if student else "NONE",
             "months": result_months
         })
+
+    @action(detail=False, methods=['post'])
+    def reset_curriculum(self, request):
+        """
+        Manually triggers the Nuclear Wipe & Rebuild asynchronously
+        to avoid Render 30s timeout.
+        """
+        import threading
+        from .rescue_engine import run_nuclear_wipe
+        
+        def async_wipe():
+            try:
+                print("Starting Async Nuclear Wipe...")
+                run_nuclear_wipe()
+                print("Async Wipe Completed.")
+            except Exception as e:
+                print(f"Async Wipe Failed: {e}")
+
+        # Fire and forget
+        threading.Thread(target=async_wipe).start()
+        
+        return Response({
+            "status": "success", 
+            "message": "Sıfırlama işlemi arka planda başlatıldı. Lütfen 30 saniye bekleyip sayfayı yenileyin."
+        }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def toggle(self, request, pk=None):

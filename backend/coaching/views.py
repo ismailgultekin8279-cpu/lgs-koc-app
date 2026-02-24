@@ -139,6 +139,8 @@ class CurriculumViewSet(viewsets.ModelViewSet):
     def list_tree(self, request):
         # AUTO-RESCUE TRIGGER (Aggressive Healing for Curriculum page)
         from .models import Topic
+        is_corrupted = Topic.objects.filter(title="Temel İşlem Yeteneği").count() > 5
+        force = request.query_params.get('force_rescue') == 'true'
         if Topic.objects.count() < 1500 or is_corrupted or force:
             from .rescue_engine import run_nuclear_wipe
             try:
